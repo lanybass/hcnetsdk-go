@@ -1,6 +1,22 @@
 package hcnetsdk
 
+// #include <stdio.h>
 // #include <stdlib.h>
+/*
+#define CALLBACK
+
+typedef  unsigned int       DWORD;
+typedef  unsigned short     WORD;
+typedef  int                LONG;
+typedef  unsigned char      BYTE;
+
+typedef void(CALLBACK *REALDATACALLBACK)(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void *pUser);
+
+void real_data_callback(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void *pUser)
+{
+	printf("%d",dwDataType);
+}
+*/
 import "C"
 
 import (
@@ -77,7 +93,7 @@ type DeviceInfo struct {
 }
 
 type PreviewInfo struct {
-	lChannel LONG	//通道号
+	Channel LONG	//通道号
 	StreamType DWORD	// 码流类型，0-主码流，1-子码流，2-码流3，3-码流4, 4-码流5,5-码流6,7-码流7,8-码流8,9-码流9,10-码流10
 	LinkMode DWORD	// 0：TCP方式,1：UDP方式,2：多播方式,3 - RTP方式，4-RTP/RTSP,5-RSTP/HTTP ,6- HRUDP（可靠传输） ,7-RTSP/HTTPS
 	PlayWnd uintptr	//播放窗口的句柄,为NULL表示不播放图象
@@ -129,7 +145,7 @@ func (sdk *HCNetSDK) Login(ipAddr string, port int, username, password string) e
 	return nil
 }
 
-func (sdk *HCNetSDK) CaptureJPEGPictureNew(jpegParam *JPEGParam) bool {
+func (sdk *HCNetSDK) CaptureJPEGPictureNew(jpegParam *JPEGParam) (bool, []byte) {
 	proc := DLL.MustFindProc("NET_DVR_CaptureJPEGPicture_NEW")
 	var picBuffer [1 << 28]byte
 	picSize := DWORD(204800)
@@ -140,10 +156,20 @@ func (sdk *HCNetSDK) CaptureJPEGPictureNew(jpegParam *JPEGParam) bool {
 		uintptr(unsafe.Pointer(jpegParam)),
 		uintptr(unsafe.Pointer(&picBuffer[0])),
 		uintptr(picSize),
-		uintptr(returnSize))
-	fmt.Printf("%v\n", returnSize)
-	fmt.Printf("%v\n", picBuffer[:returnSize])
+		uintptr(unsafe.Pointer(&returnSize)))
 	if int(r) == 0 {
+		return false, nil
+	}
+	return true, picBuffer[:returnSize]
+}
+
+func (sdk *HCNetSDK) RealPlayV40(info *PreviewInfo) bool {
+	proc := DLL.MustFindProc("NET_DVR_RealPlay_V40")
+	r, _, _ := proc.Call(
+		uintptr(sdk.UserId),
+		uintptr(unsafe.Pointer(info)),
+		uintptr(C.real_data_callback))
+	if int(r) == -1 {
 		return false
 	}
 	return true
