@@ -36,7 +36,6 @@ type BYTE byte
 type LONG int32
 type WORD uint16
 type DWORD uint32
-type HWND uint32
 
 type HCNetSDK struct {
 	UserId LONG
@@ -81,7 +80,7 @@ type PreviewInfo struct {
 	lChannel LONG	//通道号
 	StreamType DWORD	// 码流类型，0-主码流，1-子码流，2-码流3，3-码流4, 4-码流5,5-码流6,7-码流7,8-码流8,9-码流9,10-码流10
 	LinkMode DWORD	// 0：TCP方式,1：UDP方式,2：多播方式,3 - RTP方式，4-RTP/RTSP,5-RSTP/HTTP ,6- HRUDP（可靠传输） ,7-RTSP/HTTPS
-	PlayWnd HWND	//播放窗口的句柄,为NULL表示不播放图象
+	PlayWnd uintptr	//播放窗口的句柄,为NULL表示不播放图象
 	Blocked DWORD	//0-非阻塞取流, 1-阻塞取流, 如果阻塞SDK内部connect失败将会有5s的超时才能够返回,不适合于轮询取流操作.
 	PassbackRecord DWORD	//0-不启用录像回传,1启用录像回传
 	PreviewMode BYTE	//预览模式，0-正常预览，1-延迟预览
@@ -92,6 +91,11 @@ type PreviewInfo struct {
 	DisplayBufNum DWORD	//播放库播放缓冲区最大缓冲帧数，范围1-50，置0时默认为1 
 	NPQMode BYTE	//NPQ是直连模式，还是过流媒体 0-直连 1-过流媒体
 	Res [215]byte
+}
+
+type JPEGParam struct {
+	PicSize WORD
+	PicQuality WORD
 }
 
 func (sdk *HCNetSDK) Init() bool {
@@ -125,19 +129,24 @@ func (sdk *HCNetSDK) Login(ipAddr string, port int, username, password string) e
 	return nil
 }
 
-type RealDataCallBack func(playHandle LONG, dataType DWORD, buffer []byte, bufferSize DWORD)
-
-func (sdk *HCNetSDK) RealPlay(info *PreviewInfo, callback RealDataCallBack) (handle LONG, err error) {
-	proc := DLL.MustFindProc("NET_DVR_RealPlay_V40")
-	realPlayHandle, _, _ := proc.Call(
+func (sdk *HCNetSDK) CaptureJPEGPictureNew(jpegParam *JPEGParam) bool {
+	proc := DLL.MustFindProc("NET_DVR_CaptureJPEGPicture_NEW")
+	var picBuffer [1 << 28]byte
+	picSize := DWORD(204800)
+	returnSize := uint32(0)
+	r, _, _ := proc.Call(
 		uintptr(sdk.UserId),
-		uintptr(unsafe.Pointer(&info)),
-		uintptr(unsafe.Pointer(&callback)),
-		uintptr(0))
-	if handle = LONG(realPlayHandle); handle < 0 {
-		return -1, errors.New(fmt.Sprintf("RealPlay Error: %v\n", handle))
+		uintptr(sdk.Info.ChanNum),
+		uintptr(unsafe.Pointer(jpegParam)),
+		uintptr(unsafe.Pointer(&picBuffer[0])),
+		uintptr(picSize),
+		uintptr(returnSize))
+	fmt.Printf("%v\n", returnSize)
+	fmt.Printf("%v\n", picBuffer[:returnSize])
+	if int(r) == 0 {
+		return false
 	}
-	return handle, nil
+	return true
 }
 
 func (sdk *HCNetSDK) GetLastError() LONG {
