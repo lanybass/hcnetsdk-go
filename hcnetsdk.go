@@ -1,6 +1,5 @@
 package hcnetsdk
 
-// #include <stdio.h>
 // #include <stdlib.h>
 /*
 #define CALLBACK
@@ -10,12 +9,9 @@ typedef  unsigned short     WORD;
 typedef  int                LONG;
 typedef  unsigned char      BYTE;
 
-typedef void(CALLBACK *REALDATACALLBACK)(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void *pUser);
+typedef void (CALLBACK *REALDATACALLBACK) (LONG lPlayHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser);
 
-void real_data_callback(LONG lRealHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void *pUser)
-{
-	printf("%d",dwDataType);
-}
+void REALPLAYCALLBACK(LONG lPlayHandle, DWORD dwDataType, BYTE *pBuffer, DWORD dwBufSize, void* pUser);
 */
 import "C"
 
@@ -27,6 +23,19 @@ import (
 )
 
 var DLL = syscall.MustLoadDLL("HCNetSDK.dll")
+
+type RealDataCallback func(lRealHandle LONG, dwDataType DWORD, pBuffer *byte, dwBufSize DWORD, pUser unsafe.Pointer)
+
+var realDataCallback RealDataCallback
+
+func SetRealDataCallback(callback RealDataCallback) {
+	realDataCallback = callback
+}
+
+//export REALPLAYCALLBACK
+func REALPLAYCALLBACK(lRealHandle LONG, dwDataType DWORD, pBuffer *byte, dwBufSize DWORD, pUser unsafe.Pointer) {
+	realDataCallback(lRealHandle, dwDataType, pBuffer, dwBufSize, pUser)
+}
 
 const (
 	SERIALNO_LEN = 48
@@ -59,7 +68,7 @@ type HCNetSDK struct {
 }
 
 type DeviceInfo struct {
-	SerialNumber [SERIALNO_LEN]byte
+	serialNumber [SERIALNO_LEN]byte
 	AlarmInPortNum BYTE
 	AlarmOutPortNum BYTE
 	DiskNum BYTE
@@ -90,6 +99,10 @@ type DeviceInfo struct {
 	StartMirrorChanNo WORD
 	Support7 BYTE
 	Res2 BYTE
+}
+
+func (info *DeviceInfo) SerialNumber() string {
+	return string(info.serialNumber[:])
 }
 
 type PreviewInfo struct {
@@ -165,10 +178,19 @@ func (sdk *HCNetSDK) CaptureJPEGPictureNew(jpegParam *JPEGParam) (bool, []byte) 
 
 func (sdk *HCNetSDK) RealPlayV40(info *PreviewInfo) bool {
 	proc := DLL.MustFindProc("NET_DVR_RealPlay_V40")
+	if realDataCallback != nil {
+		r, _, _ := proc.Call(
+			uintptr(sdk.UserId),
+			uintptr(unsafe.Pointer(info)),
+			uintptr(C.REALPLAYCALLBACK))
+		if int(r) == -1 {
+			return false
+		}
+		return true
+	}
 	r, _, _ := proc.Call(
 		uintptr(sdk.UserId),
-		uintptr(unsafe.Pointer(info)),
-		uintptr(C.real_data_callback))
+		uintptr(unsafe.Pointer(info)))
 	if int(r) == -1 {
 		return false
 	}
