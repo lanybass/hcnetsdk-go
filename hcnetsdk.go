@@ -166,7 +166,7 @@ func (sdk *HCNetSDK) CapturePicture(sPicFileName string) bool {
     fileName := unsafe.Pointer(C.CString(sPicFileName))
     defer C.free(fileName)
     r, _, _ := proc.Call(
-        uintptr(sdk.RealHandle),
+        uintptr(sdk.RealPlayHandle),
         uintptr(fileName))
     if int(r) == 0 {
         return false
@@ -199,7 +199,7 @@ func (sdk *HCNetSDK) RealPlayV40(info *PreviewInfo) bool {
             uintptr(sdk.UserId),
             uintptr(unsafe.Pointer(info)),
             uintptr(C.REALPLAYCALLBACK))
-            sdk.RealPlayHandle = LONG(r)
+        sdk.RealPlayHandle = LONG(r)
         if int(r) == -1 {
             return false
         }
