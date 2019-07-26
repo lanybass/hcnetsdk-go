@@ -160,6 +160,14 @@ func (sdk *HCNetSDK) Login(ipAddr string, port int, username, password string) e
     return nil
 }
 
+func (sdk *HCNetSDK) SetCapturePictureMode(dwCaptureMode DWORD) bool {
+    proc := DLL.MustFindProc("NET_DVR_SetCapturePictureMode")
+    r, _, _ := proc.Call(uintptr(dwCaptureMode))
+    if int(r) == 0 {
+        return false
+    }
+    return true
+}
 
 func (sdk *HCNetSDK) CapturePicture(sPicFileName string) bool {
     proc := DLL.MustFindProc("NET_DVR_CapturePicture")
