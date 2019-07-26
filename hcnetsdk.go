@@ -65,6 +65,7 @@ type DWORD uint32
 type HCNetSDK struct {
     UserId LONG
     Info *DeviceInfo
+    RealPlayHandle LONG
 }
 
 type DeviceInfo struct {
@@ -133,6 +134,7 @@ func (sdk *HCNetSDK) Init() bool {
     if int(r) == 0 {
         return false
     }
+    sdk.RealPlayHandle = -1
     return true
 }
 
@@ -159,12 +161,12 @@ func (sdk *HCNetSDK) Login(ipAddr string, port int, username, password string) e
 }
 
 
-func (sdk *HCNetSDK) CapturePicture(lRealHandle LONG, sPicFileName string) bool {
+func (sdk *HCNetSDK) CapturePicture(sPicFileName string) bool {
     proc := DLL.MustFindProc("NET_DVR_CapturePicture")
     fileName := unsafe.Pointer(C.CString(sPicFileName))
     defer C.free(fileName)
     r, _, _ := proc.Call(
-        uintptr(lRealHandle),
+        uintptr(sdk.RealHandle),
         uintptr(fileName))
     if int(r) == 0 {
         return false
@@ -197,6 +199,7 @@ func (sdk *HCNetSDK) RealPlayV40(info *PreviewInfo) bool {
             uintptr(sdk.UserId),
             uintptr(unsafe.Pointer(info)),
             uintptr(C.REALPLAYCALLBACK))
+            sdk.RealPlayHandle = LONG(r)
         if int(r) == -1 {
             return false
         }
@@ -205,6 +208,7 @@ func (sdk *HCNetSDK) RealPlayV40(info *PreviewInfo) bool {
     r, _, _ := proc.Call(
         uintptr(sdk.UserId),
         uintptr(unsafe.Pointer(info)))
+    sdk.RealPlayHandle = LONG(r)
     if int(r) == -1 {
         return false
     }
