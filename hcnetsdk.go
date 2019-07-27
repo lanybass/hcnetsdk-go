@@ -188,7 +188,6 @@ func (sdk *HCNetSDK) CapturePictureBlockNew() (bool, []byte) {
     var picBuffer [1 << 28]byte
     picSize := DWORD(204800)
     returnSize := uint32(0)
-    defer C.free(fileName)
     r, _, _ := proc.Call(
         uintptr(sdk.RealPlayHandle),
         uintptr(unsafe.Pointer(&picBuffer[0])),
