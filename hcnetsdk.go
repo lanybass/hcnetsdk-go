@@ -185,8 +185,8 @@ func (sdk *HCNetSDK) CapturePicture(sPicFileName string) bool {
 
 func (sdk *HCNetSDK) CapturePictureBlockNew() (bool, []byte) {
     proc := DLL.MustFindProc("NET_DVR_CapturePictureBlock_New")
-    var picBuffer [1 << 28]byte
-    picSize := DWORD(204800)
+    var picBuffer [2048000]byte
+    picSize := DWORD(2048000)
     returnSize := uint32(0)
     r, _, _ := proc.Call(
         uintptr(sdk.RealPlayHandle),
