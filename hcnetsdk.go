@@ -193,8 +193,7 @@ func (sdk *HCNetSDK) CapturePictureBlockNew() (bool, []byte) {
         uintptr(sdk.RealPlayHandle),
         uintptr(unsafe.Pointer(&picBuffer[0])),
         uintptr(picSize),
-        uintptr(unsafe.Pointer(&returnSize))
-    )
+        uintptr(unsafe.Pointer(&returnSize)))
     if int(r) == 0 {
         return false, nil
     }
