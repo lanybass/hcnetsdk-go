@@ -182,6 +182,25 @@ func (sdk *HCNetSDK) CapturePicture(sPicFileName string) bool {
     return true
 }
 
+
+func (sdk *HCNetSDK) CapturePictureBlockNew() (bool, []byte) {
+    proc := DLL.MustFindProc("NET_DVR_CapturePictureBlock_New")
+    var picBuffer [1 << 28]byte
+    picSize := DWORD(204800)
+    returnSize := uint32(0)
+    defer C.free(fileName)
+    r, _, _ := proc.Call(
+        uintptr(sdk.RealPlayHandle),
+        uintptr(unsafe.Pointer(&picBuffer[0])),
+        uintptr(picSize),
+        uintptr(unsafe.Pointer(&returnSize)))
+    )
+    if int(r) == 0 {
+        return false, nil
+    }
+    return true, picBuffer[:returnSize]
+}
+
 func (sdk *HCNetSDK) CaptureJPEGPictureNew(jpegParam *JPEGParam) (bool, []byte) {
     proc := DLL.MustFindProc("NET_DVR_CaptureJPEGPicture_NEW")
     var picBuffer [1 << 28]byte
