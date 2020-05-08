@@ -5,5 +5,5 @@ hikvision-go SDK
 ## Demo
 
 ```bash
- go test -ldflags="-r ./lib" hcnetsdk_linux.go hcnetsdk_test.go
+ go test -ldflags="-r ./lib" .
 ```

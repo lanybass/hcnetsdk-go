@@ -19,7 +19,6 @@ func Test(t *testing.T) {
 			t.Fatal("fail in logout")
 		}
 	}()
-	//d, _ := os.Getwd()
 	err, b := sdk.CaptureJPEGPictureNew(&JPEGParam{
 		PicSize:    9,
 		PicQuality: 0,
@@ -27,5 +26,5 @@ func Test(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ioutil.WriteFile("pic.jpg",b,os.FileMode(0644))
+	ioutil.WriteFile("pic.jpg", b, os.FileMode(0644))
 }

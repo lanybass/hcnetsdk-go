@@ -22,7 +22,6 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"log"
 	"unsafe"
 )
 
@@ -199,7 +198,6 @@ func (sdk *HCNetSDK) CaptureJPEGPictureNew(jpegParam *JPEGParam) (error, []byte)
 	var picBuffer [20480000]byte
 	picSize := DWORD(20480000)
 	returnSize := uint32(0)
-	log.Println(sdk.UserId, sdk.Info.ChanNum)
 	r := C.NET_DVR_CaptureJPEGPicture_NEW(
 		(C.int)(sdk.UserId),
 		(C.int)(sdk.Info.ChanNum),
