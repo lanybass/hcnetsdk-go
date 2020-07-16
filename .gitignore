@@ -1,2 +1,7 @@
 *.dll
 .vscode/
+.idea
+/*.jpg
+/*.jpeg
+/*.png
+/*.bmp
